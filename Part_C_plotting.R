@@ -1,6 +1,6 @@
 rm(list=ls())
 # INPUTS #
-PCA.eigenvec="" # plink2 --PCA output, headed, with FID, IID, PCAs
+PCA.eigenvec="" # plink2 --PCA scores (e.g plink.eigenvec) with  with FID, IID, PCs
 PSAM <- "samplesincluded.tsv"
 KEPT <- "kept.XXX"  #output of previous step (full path)
 
@@ -15,16 +15,23 @@ GSM_C_plotting(PCA.eigenvec = PCA.eigenvec, PSAM = PSAM, KEPT = KEPT, PCMAX = PC
 
 ##### function #####
 GSM_C_plotting <- function(PCA.eigenvec = PCA,eigenvec, PSAM = PSAM, KEPT = KEPT, PCMAX = PCMAX, NORMPLOT = NORMPLOT){
-library(ggplot2)
-library(grid)
-library(gridExtra)
+  load_or_install <- function(pkgs) {
+  for (pkg in pkgs) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      install.packages(pkg, repos = "https://cloud.r-project.org")
+    }
+    library(pkg, character.only = TRUE)
+  }
+}
+
+load_or_install(c("ggplot2","grid","gridExtra","data.table"))
 
 
 if (!exists("cohort")) {
-cohort=read.table(PSAM, header=F, comment.char = "#", col.names = c("FID", "IID", "F", "M", "Sex", "PHENO1"))
+cohort=fread(PSAM, col.names = c("FID", "IID", "F", "M", "Sex", "PHENO1"))
 }
 if (!exists("d")){
-  d <- read.table(PCA.eigenvec, header=F, comment.char = "#", col.names = c("FID", "IID", paste0("PC",1:PCMAX)))
+  d <- fread(PCA.eigenvec, col.names = c("FID", "IID", paste0("PC",1:PCMAX)))
   if(NORMPLOT=="y"){ 
     d[,3:(PCMAX+2)] <- lapply(d[,3:(PCMAX+2)], function(col) col / sqrt(sum(col^2)))
   }
