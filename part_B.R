@@ -31,7 +31,7 @@ GSM_B <- function(wdt=ccdistances,
                   MILPverbose=FALSE)
 {
   setwd(datadir)
-  cohort=read.table(psam, header=T, comment.char = "#", col.names = c("FID", "IID", "F", "M", "Sex", "PHENO1"))
+  cohort=fread(psam, col.names = c("FID", "IID", "F", "M", "Sex", "PHENO1"))
   outdirp=file.path(outdirp) # output directory parent. No final slash 
   
   setwd(outdirp)
@@ -392,8 +392,8 @@ firstmatch_cases_kept_indices <- firstmatch_case_counts[N >= ncmin, i_index] # f
 
 deficit_cases_indices<-setdiff(firstmatch$feasible_case_indices,firstmatch_cases_kept_indices)
 
-if(length(deficit_cases_indices)==0){
-  print("No deficit cases")
+if(length(deficit_cases_indices)<=1){
+  print("One or fewer deficit cases")
 final_matched_casecontrols<-firstmatch$matched_casescontrols[firstmatch$matched_casescontrols$i_index %in% firstmatch_cases_kept_indices,]
 }else{
   if(useMILP==TRUE){
