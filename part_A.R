@@ -54,28 +54,29 @@ GSM_A <- function(
   
   library(ggplot2)
   library(parallel)
+  library(data.table)
   
 an = function(x){as.numeric(as.character(x))}
 setwd(DATADIR)
 FILEOUTSTEM <- paste0(FILEOUTSTEM,"_",PCmax,"pcs")
 
+
 #Load PC data
-d=read.table(PCA.eigenvec,header=F, comment.char = "#") # header to avoid problems if plink1.9 vs 2 is used. 
+d=fread(PCA.eigenvec) # header to avoid problems if plink1.9 vs 2 is used. 
 names(d)=c("FID","IID",paste("PC",1:10,sep="")) # take care that these match and that first line of the file isn't removed. 
 
 
 #Load weightings
-ev = an(read.table(PCA.eigenval, header=F)[,1])
+ev = fread(PCA.eigenval)[,1]
 ev.weight = ev/sum(ev) # weighting as proportion of top 10 eigenvals
 
 
 # read case control. check here that the correct columns (e.g. XIID, PC1-10 are being selected)
-cohort=read.table(SAMPLEFILE, header=T,comment.char = "#", )
+cohort=fread(SAMPLEFILE)
 
-# cases_i<-which(cohort[,SAMPLEFILE_PHENOCOL]==2)
-# ctrls_i<-which(cohort[[SAMPLEFILE_PHENOCOL]]==1)
-# cases <- d[cases_i,2:12]  # check
-# controls <- d[ctrls_i,2:12]  # check
+print(paste0("Sense check: nrow of PC scores loaded: ", nrow(d)))
+print(paste0("Sense check: nrow of sample IDs loaded: ", nrow(cohort)))
+
 cases <- d[d$IID %in% cohort[[SAMPLEFILE_IDCOL]][cohort[[SAMPLEFILE_PHENOCOL]] == 2],2:12]
 controls  <- d[d$IID %in% cohort[[SAMPLEFILE_IDCOL]][cohort[[SAMPLEFILE_PHENOCOL]] == 1],2:12]  # check that case control assignment is in col6 and IID in col 2
 
