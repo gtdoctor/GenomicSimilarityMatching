@@ -1,0 +1,6 @@
+Obsolete/
+Local/
+
+# local-only scripts: not part of the published A/B/C pipeline
+gsm_b_driver20260211.R
+gsm_plot.indivs.R
