@@ -1,20 +1,16 @@
 rm(list=ls())
 # INPUTS #
-PCA.eigenvec="" # plink2 --PCA scores (e.g plink.eigenvec) with  with FID, IID, PCs
-PSAM <- "samplesincluded.tsv"
-KEPT <- "kept.XXX"  #output of previous step (full path)
+args<-commandArgs(trailingOnly=TRUE)
+PCA.eigenvec=args[1] # PCA output, headed or headerless, with FID, IID, PCs
+PSAM <- args[2]      # sample file, as used in parts A and B
+KEPT <- args[3]      # full path to the kept.*.tsv written by part B
 
 # CHOICES # 
-
 PCMAX = 10 # number of PCs in the dataset. 
 NORMPLOT <- "y" # choose y or n, to plot normalised data (which puts all PCs onto same scale)
 
-GSM_C_plotting(PCA.eigenvec = PCA.eigenvec, PSAM = PSAM, KEPT = KEPT, PCMAX = PCMAX, NORMPLOT = NORMPLOT)
-
-
-
 ##### function #####
-GSM_C_plotting <- function(PCA.eigenvec = PCA,eigenvec, PSAM = PSAM, KEPT = KEPT, PCMAX = PCMAX, NORMPLOT = NORMPLOT){
+GSM_C_plotting <- function(PCA.eigenvec = PCA.eigenvec, PSAM = PSAM, KEPT = KEPT, PCMAX = PCMAX, NORMPLOT = NORMPLOT){
   load_or_install <- function(pkgs) {
   for (pkg in pkgs) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -26,9 +22,16 @@ GSM_C_plotting <- function(PCA.eigenvec = PCA,eigenvec, PSAM = PSAM, KEPT = KEPT
 
 load_or_install(c("ggplot2","grid","gridExtra","data.table"))
 
+# arrangeGrob measures grobs against the current device; with none open R
+# starts the default png device and leaves Rplot00N.png in the output directory.
+pdf(NULL)
+on.exit(dev.off(), add = TRUE)
+
 
 if (!exists("cohort")) {
-cohort=fread(PSAM, col.names = c("FID", "IID", "F", "M", "Sex", "PHENO1"))
+# PSAM may carry extra trailing columns (e.g. genotyping chip) — name only the first 6.
+cohort = fread(PSAM, header = FALSE)
+setnames(cohort, 1:6, c("FID", "IID", "F", "M", "Sex", "PHENO1"))
 }
 if (!exists("d")){
   d <- fread(PCA.eigenvec, col.names = c("FID", "IID", paste0("PC",1:PCMAX)))
@@ -49,7 +52,6 @@ cases$Group <- ifelse(cases$IID %in% kept, "Case kept", "Case removed")
 controls$Group <- ifelse(controls$IID %in% kept, "Control kept", "Control removed")
 
 #### RESULTS #####
-current_date <- Sys.Date()
 graphstem <-sub(".*kept\\.(.*)\\.tsv$", "\\1", KEPT)
 GRAPHPRE=paste0("plot.allsamples.", graphstem, ".jpg")
 GRAPHSPLIT=paste0( "plot.splitsamples.",graphstem, ".jpg")
@@ -75,12 +77,12 @@ setwd(outdir)
                 'Case removed' = "pink")
   
   
-  theme_set(theme_minimal(base_size = 6) +
+  theme_set(theme_minimal(base_size = 12) +
               theme(
-                plot.title = element_text(size = 8),
-                axis.title = element_text(size = 8),
-                legend.title = element_text(size = 8),
-                legend.text = element_text(size = 8),
+                plot.title = element_text(size = 16),
+                axis.title = element_text(size = 16),
+                legend.title = element_text(size = 16),
+                legend.text = element_text(size = 16),
                 legend.key.size = unit(0.2, "lines"),  # Adjusts the size of the legend keys
                 legend.spacing.x = unit(0.2, "cm"),  # Adjusts spacing between legend entries (horizontally)
                 legend.spacing.y = unit(0.5, "cm"),  # Adjusts spacing between legend entries (vertically)
@@ -183,9 +185,11 @@ setwd(outdir)
   after2 = arrangeGrob(g1c, g2c, g3c, g4c, nrow = 2 )
   
   ggsave(GRAPHPRE, plot = before,device = "jpeg", path = outdir,  width = 20, height = 16, dpi = 300)
+  # arrangeGrob, not grid.arrange: the latter also draws to the current device,
+  # littering the output directory with Rplot00N.png
   ggsave(GRAPHSPLIT,
-         grid.arrange(after,top= textGrob(paste0(text),
-                                          gp = gpar(fontsize = 10, font =2))),
+         plot = arrangeGrob(after, top = textGrob(paste0(text),
+                                                 gp = gpar(fontsize = 20, font = 2))),
          device = "jpeg", path = outdir, width = 20, height = 16, dpi = 300)
   ggsave(GRAPHKEPT, plot = after2 ,device = "jpeg", path = outdir,  width = 20, height = 16, dpi = 300)
 }
@@ -193,3 +197,6 @@ setwd(outdir)
 
 ##### run_function #####
 GSM_C_plotting(PCA.eigenvec = PCA.eigenvec, PSAM = PSAM, KEPT = KEPT, PCMAX = PCMAX, NORMPLOT = NORMPLOT)
+
+
+
