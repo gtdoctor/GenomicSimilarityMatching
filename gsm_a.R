@@ -126,7 +126,7 @@ pc_cols <- paste0("PC", 1:PCmax)
 mult <- rep(1, PCmax)
 
 if (scale==TRUE){
-mult <- mult / vapply(pc_cols, function(cc) sd(d[[cc]]), numeric(1))
+mult <- mult / vapply(pc_cols, function(pc_col) sd(d[[pc_col]]), numeric(1))
 FILEOUTSTEM=paste0(FILEOUTSTEM,"_scaled")
 }
 
